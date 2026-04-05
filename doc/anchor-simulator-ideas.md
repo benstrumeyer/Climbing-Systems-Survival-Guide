@@ -141,9 +141,55 @@ Each scenario scores on: correct sequence, no deadly omissions (backup? autobloc
 
 ---
 
+## The VR endgame (this is where it has to go)
+
+Rigging a climbing anchor is a **hand skill**, not a mouse-and-keyboard skill. You can't learn to tie a clove hitch, dress a figure-8, or feel when a cam is over-cammed by dragging sprites on a laptop. The muscle memory lives in your fingers. A flat three.js sandbox is a useful first step, but the honest endpoint for this project is **VR with hand tracking** — Quest 3 / Vision Pro / any WebXR device with joint-level hand input.
+
+The flat browser version is the prototype. VR is the product.
+
+### Why VR is actually required, not a nice-to-have
+
+- **Knot tying is finger choreography.** You need to see both hands, feel the difference between a bight and a loop, pinch the working end, and push it through. A 2D drag-and-drop interface for knots teaches a parody of the real skill.
+- **Gear handling is spatial.** Selecting a cam off a gear loop, racking it, extending it with a sling, clipping it — that's five hand positions in three seconds. VR captures all of it.
+- **Anchor building is a two-handed job with a rope always in the way.** You manage tension with one hand while tying with the other. Desktop can't simulate that divided attention.
+- **Consequence is emotional, not numerical.** Looking up at a simulated anchor you built, above your head in room-scale, is 10x more motivating than a HUD saying "SAFE". Leaning back on it — even in VR — triggers the same commitment feeling that loading a real anchor does.
+- **Zero-consequence practice is the entire product pitch.** VR is the only medium where "do the wrong thing and see what happens" actually approximates the motor experience.
+
+### What the VR version adds on top of the flat sim
+
+- **Native hand tracking** — no controllers. Grab carabiners, pinch rope, thread bights, dress knots. Use the WebXR Hand Input API (joint-level, 25 joints per hand). Quest 3 and Vision Pro both support it.
+- **A virtual rack on your harness** — look down, see cams by color, grab the one you want, rack it back when done. Muscle memory for organization.
+- **Rope as a real object** — a segmented rope with verlet or position-based dynamics, length you can feel, ends you can find by following hand-over-hand. This is the hard part technically and the most valuable part pedagogically.
+- **Room-scale anchor stations** — walk up to a ledge, look over, see the bolts. Walk to the edge of your play space, look down at the exposure. This is the closest a sim can get to teaching the *attention* that anchor building requires.
+- **Two-handed knots** — the user ties the actual knot with their actual hands on a virtual rope. Shape recognition confirms when a valid knot has formed; dressing check runs continuously.
+- **Gear placement in 3D cracks** — reach into a crack, slot a cam, trigger the lobes, feel (visually) whether it's in range. Pull-test by tugging on the sling with your hand.
+- **Belay device handling** — feed rope through a Grigri or ATC with both hands, lock off, lower, catch. The motor pattern for catching a fall is trainable in VR in a way it simply isn't on a screen.
+- **Mixed reality passthrough** — on Quest 3 / Vision Pro, render the virtual rope and anchor *in your actual room*, draped over your actual furniture. Rig a cordelette on the corner of your desk. Makes practice possible anywhere.
+
+### Tech approach for the VR build
+
+- **WebXR + three.js** (not Unity). Keeps the flat-browser and VR versions in the same codebase and deployable as a URL. No app store.
+- **Hand Input API** for joint tracking. Grab/pinch detection from thumb-index distance + palm orientation.
+- **Rope physics**: Cosserat rods or position-based dynamics. Rapier has a rope joint; a custom PBD chain is probably simpler and faster. ~30–50 segments is enough for a 60cm sling.
+- **Knot recognition**: topological — detect crossings and compute a simplified knot signature (Gauss code or Alexander polynomial for the ambitious). Cheaper proxy: compare the rope centerline against canonical knot curves with ICP and accept within a tolerance.
+- **Haptics** (controllers only, not hand tracking): vibration cue when a knot dresses, when a cam engages, when a piece fails.
+- **Fallback to controllers** for users without hand tracking, but design-first for hands.
+
+### Migration path from flat sim to VR
+
+1. **Flat three.js MVP** (the earlier sections of this doc) — proves the physics model and the teaching loop.
+2. **Add WebXR scene mode** — same scene, viewed in VR, still using controllers. Validates immersion value.
+3. **Swap to hand tracking** for the interactions that matter most first: grabbing carabiners, threading rope through a belay device.
+4. **Rope physics upgrade** — move from static geometry to a real PBD rope once hands can interact with it.
+5. **Knot sub-sim in VR** — the killer app. If this one thing works well, the project has justified itself.
+6. **Full parity** — every flat-sim lesson ported to VR, plus the lessons that are *only* possible in VR (two-handed knots, rack management, belay handling).
+
+VR is not a stretch goal. It's the version of this project that actually teaches the skill. Everything else is scaffolding.
+
+---
+
 ## Stretch ideas
 
-- **VR mode** via WebXR — rig an anchor in room-scale, actually reaching for gear on a virtual rack.
 - **Multiplayer belay** — one user leads, one belays, both see the same rope in real time.
 - **Fall physics** — drop-test mode where you set fall factor and watch peak force on the anchor.
 - **Rockfall / ice screws / snow anchors** — alpine systems, deadman placements, T-slots.
@@ -155,10 +201,11 @@ Each scenario scores on: correct sequence, no deadly omissions (backup? autobloc
 
 ## Tech sketch (non-binding)
 
-- **three.js** for 3D, OrbitControls, DragControls.
-- **Cannon-es** or **Rapier** only if/when rope dynamics need real physics. Otherwise keep it geometric.
+- **three.js + WebXR** for 3D — same codebase targets both flat browser and VR headsets.
+- **OrbitControls / DragControls** for flat mode; **WebXR Hand Input API** for VR mode.
+- **Rapier** or custom PBD for rope dynamics once VR lands. Flat MVP stays geometric.
 - Single-page app, no backend. Scene presets as JSON. Lesson state in localStorage.
-- Eventually embed inside the Climbing Systems coach app as the "lab" tab.
+- Eventually embed inside the Climbing Systems coach app as the "lab" tab, with a "Launch in VR" button on any compatible device.
 
 ---
 
